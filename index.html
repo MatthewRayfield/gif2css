@@ -1,0 +1,149 @@
+<style>
+    .pixel {
+        display: inline-block;
+        width: 5;
+        height: 5;
+    }
+</style>
+<script src="gifuct-js.js"></script>
+<script>
+    var divider = 5;
+
+    var frames;
+    var f = 0;
+    var canvas;
+    var context;
+    var tempCanvas;
+    var tempContext;
+
+    var lastImageData;
+    var cssPerPixel = [];
+    var fullCss;
+
+    function render() {
+        var frame = frames[f];
+        var dims = frame.dims;
+	
+        if (!canvas) {
+            canvas = document.createElement('canvas');
+            context = canvas.getContext('2d');
+            canvas.width = dims.width;
+            canvas.height = dims.height;
+
+            tempCanvas = document.createElement('canvas');
+            tempContext = tempCanvas.getContext('2d');
+            tempCanvas.width = dims.width;
+            tempCanvas.height = dims.height;
+
+            setupDisplay();
+        }
+	
+        var imageData = tempContext.createImageData(dims.width, dims.height);
+        imageData.data.set(frame.patch);
+        tempContext.putImageData(imageData, 0, 0);
+
+        context.drawImage(tempCanvas, dims.left, dims.top);
+    }
+
+    function setupDisplay() {
+        var display = document.createElement('div');
+        var c = 0;
+
+        for (let y = 0; y < canvas.height; y += divider) {
+            let row = document.createElement('div');
+
+            for (let x = 0; x < canvas.width; x += divider) {
+                let pixel = document.createElement('div');
+                pixel.id = 'p'+c;
+                pixel.className = 'pixel';
+
+                row.appendChild(pixel);
+                c ++;
+            }
+
+            display.appendChild(row);
+        }
+
+        document.body.appendChild(display);
+    }
+
+    function convert() {
+        var c = 0;
+
+        var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+        for (let y = 0; y < canvas.height; y += divider) {
+            for (let x = 0; x < canvas.width; x += divider) {
+                let percent = Math.floor((f/(frames.length-1))*100);
+
+                if (!cssPerPixel[c]) {
+                    cssPerPixel[c] = `#p${c} {animation: a${c} 1s linear infinite;}\n@keyframes a${c} {\n`;
+                }
+
+                let i = ((y * canvas.width) + x) * 4;
+
+                let r = imageData.data[i+0];
+                let g = imageData.data[i+1];
+                let b = imageData.data[i+2];
+
+                let changed = true;
+
+                /*if (lastImageData) {
+                    let lr = lastImageData.data[i+0];
+                    let lg = lastImageData.data[i+1];
+                    let lb = lastImageData.data[i+2];
+
+                    if (r == lr && g == lg && b == lb) {
+                        changed = false;
+                    }
+                }*/
+
+                if (changed || percent == 100) {
+                    let color = `rgb(${r},${g},${b})`;
+                    cssPerPixel[c] += `    ${percent}% {background-color: ${color};}\n`;
+                }
+
+                if (percent == 100) {
+                    cssPerPixel[c] += '}';
+                }
+
+                c ++;
+            }
+        }
+
+        lastImageData = imageData;
+    }
+
+    function transcode() {
+        frames.forEach((frame, ff) => {
+            f = ff;
+            render();
+            convert();
+        });
+
+        fullCss = cssPerPixel.join('\n\n');
+        console.log(fullCss.length / 1024 / 1024);
+
+        const style = document.createElement('style');
+        style.innerHTML = fullCss;
+        document.head.appendChild(style);
+    }
+
+    window.addEventListener('load', () => {
+        var oReq = new XMLHttpRequest();
+        oReq.open('GET', 'spongebob.gif', true);
+        oReq.responseType = "arraybuffer";
+
+        oReq.onload = function (oEvent) {
+            var arrayBuffer = oReq.response; // Note: not oReq.responseText
+            if (arrayBuffer) {
+                gif = new GIF(arrayBuffer);
+                frames = gif.decompressFrames(true);
+
+                transcode();
+            }
+        };
+
+        oReq.send(null);
+    });
+</script>

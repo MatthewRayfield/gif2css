@@ -1,0 +1,106 @@
+<style>
+    body {
+        animation: a 2s linear infinite;
+        background-repeat: no-repeat;
+    }
+</style>
+<script src="gifuct-js.js"></script>
+<script>
+    var divider = 10;
+    var scale = .5;
+
+    var frames;
+    var f = 0;
+    var canvas;
+    var context;
+    var tempCanvas;
+    var tempContext;
+
+    const gradients = [];
+
+    function render() {
+        var frame = frames[f];
+        var dims = frame.dims;
+	
+        if (!canvas) {
+            canvas = document.createElement('canvas');
+            context = canvas.getContext('2d');
+            canvas.width = dims.width;
+            canvas.height = dims.height;
+
+            tempCanvas = document.createElement('canvas');
+            tempContext = tempCanvas.getContext('2d');
+            tempCanvas.width = dims.width;
+            tempCanvas.height = dims.height;
+        }
+	
+        var imageData = tempContext.createImageData(dims.width, dims.height);
+        imageData.data.set(frame.patch);
+        tempContext.putImageData(imageData, 0, 0);
+
+        context.drawImage(tempCanvas, dims.left, dims.top);
+    }
+
+    function convert() {
+        let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+        for (let x = 0; x < canvas.width; x += divider) {
+            const colors = [];
+
+            for (let y = 0; y < canvas.height; y += divider) {
+                let i = ((y * canvas.width) + x) * 4;
+
+                let r = ('00'+imageData.data[i+0].toString(16)).slice(-2);
+                let g = ('00'+imageData.data[i+1].toString(16)).slice(-2);
+                let b = ('00'+imageData.data[i+2].toString(16)).slice(-2);
+
+                let rgb = `#${r}${g}${b}`;
+
+                colors.push(rgb);
+            }
+
+            let gradient = `linear-gradient(${colors.join(',')})`;
+            gradients.push(gradient);
+        }
+    }
+
+    function transcode() {
+        f = 0;
+        render();
+        convert();
+
+        let css = `body {\nbackground-size: ${divider}px ${canvas.height}px;\n`;
+
+        const positions = [];
+        for (let x = 0; x < canvas.width; x += divider) {
+            positions.push(`${x}px 0px`);
+        }
+        css += 'background-position:' + positions.join(',') + ';\n';
+
+        css += 'background-image:' + gradients.join(',') + ';\n}';
+
+        console.log(css.length / 1024 / 1024);
+
+        const style = document.createElement('style');
+        style.innerHTML = css;
+        document.head.appendChild(style);
+    }
+
+    window.addEventListener('load', () => {
+        var oReq = new XMLHttpRequest();
+        oReq.open('GET', 'spongebob.gif', true);
+        oReq.responseType = "arraybuffer";
+
+        oReq.onload = function (oEvent) {
+            var arrayBuffer = oReq.response; // Note: not oReq.responseText
+            if (arrayBuffer) {
+                gif = new GIF(arrayBuffer);
+                frames = gif.decompressFrames(true).splice(0, 1);
+
+                transcode();
+            }
+        };
+
+        oReq.send(null);
+    });
+</script>

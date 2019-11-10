@@ -1,0 +1,122 @@
+<style>
+    body {
+        animation: a 2s linear infinite;
+    }
+</style>
+<script src="gifuct-js.js"></script>
+<script>
+    var divider = 10;
+    var scale = .5;
+
+    var frames;
+    var f = 0;
+    var canvas;
+    var context;
+    var tempCanvas;
+    var tempContext;
+
+    var keyframes = [];
+
+    function render() {
+        var frame = frames[f];
+        var dims = frame.dims;
+	
+        if (!canvas) {
+            canvas = document.createElement('canvas');
+            context = canvas.getContext('2d');
+            canvas.width = dims.width;
+            canvas.height = dims.height;
+
+            tempCanvas = document.createElement('canvas');
+            tempContext = tempCanvas.getContext('2d');
+            tempCanvas.width = dims.width;
+            tempCanvas.height = dims.height;
+        }
+	
+        var imageData = tempContext.createImageData(dims.width, dims.height);
+        imageData.data.set(frame.patch);
+        tempContext.putImageData(imageData, 0, 0);
+
+        context.drawImage(tempCanvas, dims.left, dims.top);
+    }
+
+    function convert() {
+        var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+        var backGradients = [];
+        var frontGradients = [];
+
+        for (let y = 0; y < canvas.height-(divider/2); y += divider) {
+            for (let x = 0; x < canvas.width-(divider/2); x += divider) {
+                let xx = x;
+                let yy = y;
+
+                let i = ((yy * canvas.width) + xx) * 4;
+
+                let r = ('00'+imageData.data[i+0].toString(16)).slice(-2);
+                let g = ('00'+imageData.data[i+1].toString(16)).slice(-2);
+                let b = ('00'+imageData.data[i+2].toString(16)).slice(-2);
+
+                let rgb = `#${r}${g}${b}`;
+                //let gradient = `radial-gradient(circle at ${xx}px ${yy}px,${rgb},${rgb} ${divider/2}px,transparent ${divider/2}px)`;
+                let gradient = `radial-gradient(circle at ${xx*scale}px ${yy*scale}px,${rgb},${rgb} ${(divider/2)*scale}px,transparent ${(divider/2)*scale}px)`;
+
+                backGradients.push(gradient);
+
+                /*xx += divider/2;
+                yy += divider/2;
+
+                i = ((Math.floor(yy) * canvas.width) + Math.floor(xx)) * 4;
+
+                r = imageData.data[i+0];
+                g = imageData.data[i+1];
+                b = imageData.data[i+2];
+
+                rgb = `rgb(${r},${g},${b})`;
+                gradient = `radial-gradient(circle at ${xx}px ${yy}px,${rgb},${rgb} ${divider/2}px,transparent ${divider/2}px)`;
+
+                frontGradients.push(gradient);*/
+            }
+        }
+
+        let percent = Math.floor((f/(frames.length-1))*100);
+        console.log(percent);
+        //let frameCss = percent+'%{background:'+backGradients.join(',')+','+frontGradients.join(',')+'}';
+        let frameCss = percent+'%{background:'+backGradients.join(',')+'}';
+
+        keyframes.push(frameCss);
+    }
+
+    function transcode() {
+        frames.forEach((frame, ff) => {
+            f = ff;
+            render();
+            convert();
+        });
+
+        let css = '@keyframes a {' + keyframes.join('\n') + '}';
+        console.log(css.length / 1024 / 1024);
+
+        const style = document.createElement('style');
+        style.innerHTML = css;
+        document.head.appendChild(style);
+    }
+
+    window.addEventListener('load', () => {
+        var oReq = new XMLHttpRequest();
+        oReq.open('GET', 'spongebob.gif', true);
+        oReq.responseType = "arraybuffer";
+
+        oReq.onload = function (oEvent) {
+            var arrayBuffer = oReq.response; // Note: not oReq.responseText
+            if (arrayBuffer) {
+                gif = new GIF(arrayBuffer);
+                frames = gif.decompressFrames(true);
+
+                transcode();
+            }
+        };
+
+        oReq.send(null);
+    });
+</script>

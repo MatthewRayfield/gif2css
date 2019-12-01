@@ -105,7 +105,8 @@
             reduceColors: document.getElementById('reduce-colors-checkbox').checked,
             center: document.getElementById('center-checkbox').checked,
             transparency: document.getElementById('transparency-checkbox').checked,
-            name: nameInput.value || 'gif-animation'
+            name: nameInput.value || 'gif2css-animation',
+            selector: document.getElementById('selector-input').value || 'body'
         };
 
         duration = 0;
@@ -125,7 +126,7 @@
             time += frame.delay;
         });
 
-        let css = `body {\nbackground-size: ${divider}px ${canvas.height}px;\n`;
+        let css = `${options.selector} {\nbackground-size: ${divider}px ${canvas.height}px;\n`;
         /*let width = (divider/canvas.width)*100;
         let css = `body {\nbackground-size: ${width*1.5}% 100%;\n`;*/
 
@@ -144,7 +145,6 @@
         console.log(seconds, 'seconds');
 
         css += 'animation: ' + options.name + ' ' + seconds + 's linear infinite;\n';
-        css += 'height: 100%;\n';
         css += 'background-repeat: no-repeat;\n';
         css += 'background-image: ' + gradients.join(',') + ';\n';
         css += 'background-position: ' + positions.join(',') + ';\n}\n';
@@ -231,4 +231,8 @@
 <div>
     <label for="name-input">animation name</label>
     <input type="text" id="name-input" /> ?
+</div>
+<div>
+    <label for="selector-input">css selector</label>
+    <input type="text" id="selector-input" value="body" /> ?
 </div>

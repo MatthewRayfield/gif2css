@@ -8,6 +8,8 @@
     let scale = .5;
 
     let frames;
+    let duration = 0;
+    let time = 0;
     let f = 0;
     let canvas;
     let context;
@@ -63,17 +65,27 @@
             gradients.push(gradient);
         }
 
-        let percent = Math.floor((f/(frames.length-1))*100);
+        let percent = ((time / duration) * 100).toFixed(2);
 
         let frameCss = percent+'%{background-image:'+gradients.join(',')+'}';
         keyframes.push(frameCss);
     }
 
     function encode() {
+        duration = 0;
+        time = 0;
+
+        frames.forEach((frame) => {
+            duration += frame.delay;
+        });
+
         frames.forEach((frame, ff) => {
             f = ff;
+
             render();
             convert();
+
+            time += frame.delay;
         });
 
         let css = `body {\nbackground-size: ${divider}px ${canvas.height}px;\n`;
@@ -86,7 +98,10 @@
             //positions.push(`${x*width}% 0%`);
         }
 
-        css += 'animation: a 2s linear infinite;\n';
+        const seconds = (duration / 1000).toFixed(2);
+        console.log(seconds, 'seconds');
+
+        css += 'animation: a ' + seconds + 's linear infinite;\n';
         css += 'height: 100%;\n';
         css += 'background-repeat: no-repeat;\n';
         css += 'background-image: ' + gradients.join(',') + ';\n';

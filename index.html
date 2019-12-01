@@ -8,6 +8,7 @@
     let divider = 2;
 
     let frames;
+    let backgroundColor;
     let duration = 0;
     let time = 0;
     let f = 0;
@@ -16,6 +17,7 @@
     let tempCanvas;
     let tempContext;
     let options = {}
+    let lastDisposalType = 2;
 
     const keyframes = [];
     let gradients;
@@ -35,12 +37,24 @@
             tempCanvas.width = dims.width;
             tempCanvas.height = dims.height;
         }
+
+        if (lastDisposalType == 2) {
+            if (backgroundColor) {
+                context.fillStyle = backgroundColor;
+                context.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            else {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
 	
         const imageData = tempContext.createImageData(dims.width, dims.height);
         imageData.data.set(frame.patch);
         tempContext.putImageData(imageData, 0, 0);
 
         context.drawImage(tempCanvas, dims.left, dims.top);
+
+        lastDisposalType = frame.disposalType;
     }
 
     function convert() {
@@ -56,16 +70,22 @@
                 let r = ('0'+imageData.data[i+0].toString(16)).slice(-2);
                 let g = ('0'+imageData.data[i+1].toString(16)).slice(-2);
                 let b = ('0'+imageData.data[i+2].toString(16)).slice(-2);
+                let a = ('0'+imageData.data[i+3].toString(16)).slice(-2);
 
                 if (options.reduceColors) {
                     r = r.slice(0, 1);
                     g = g.slice(0, 1);
                     b = b.slice(0, 1);
+                    a = a.slice(0, 1);
                 }
 
-                let rgb = `#${r}${g}${b}`;
+                let color = `#${r}${g}${b}`;
 
-                colors.push(rgb);
+                if (options.transparency) {
+                    color += a;
+                }
+
+                colors.push(color);
             }
 
             let gradient = `linear-gradient(${colors.join(',')})`;
@@ -81,11 +101,13 @@
     function encode() {
         options = {
             reduceColors: document.getElementById('reduce-colors-checkbox').checked,
-            center: document.getElementById('center-checkbox').checked
+            center: document.getElementById('center-checkbox').checked,
+            transparency: document.getElementById('transparency-checkbox').checked
         };
 
         duration = 0;
         time = 0;
+        lastDisposalType = 2;
 
         frames.forEach((frame) => {
             duration += frame.delay;
@@ -133,6 +155,25 @@
         document.head.appendChild(style);
     }
 
+    function loadGif(arrayBuffer) {
+        const gif = new GIF(arrayBuffer);
+        frames = gif.decompressFrames(true);
+
+        const bgIndex = gif.raw.lsd.backgroundColorIndex;
+        if (bgIndex == frames[0].transparentIndex) {
+            backgroundColor = null;
+        }
+        else {
+            const colors = frames[0].colorTable[bgIndex];
+            backgroundColor = `rgb(${colors[0]}, ${colors[1]}, ${colors[2]})`;
+        }
+
+        console.log('bgcolor', backgroundColor);
+        console.log(frames.length + ' frames');
+
+        encode();
+    }
+
     function loadFile(event) {
         const URL = window.URL || window.webkitURL;
         const file = this.files[0];
@@ -142,14 +183,7 @@
             return;
         }
 
-        file.arrayBuffer().then((arrayBuffer) => {
-            const gif = new GIF(arrayBuffer);
-            frames = gif.decompressFrames(true);
-
-            console.log(frames.length + ' frames');
-
-            encode();
-        });
+        file.arrayBuffer().then(loadGif);
     }
 
     window.addEventListener('load', () => {
@@ -165,11 +199,7 @@
             const arrayBuffer = oReq.response;
 
             if (arrayBuffer) {
-                gif = new GIF(arrayBuffer);
-                frames = gif.decompressFrames(true);
-                console.log(frames.length + ' frames');
-
-                encode();
+                loadGif(arrayBuffer);
             }
         };
 
@@ -184,4 +214,8 @@
 <div>
     <label for="center-checkbox">center</label>
     <input type="checkbox" id="center-checkbox" checked="true" /> ?
+</div>
+<div>
+    <label for="transparency-checkbox">transparency</label>
+    <input type="checkbox" id="transparency-checkbox" /> ?
 </div>

@@ -101,7 +101,30 @@
         document.head.appendChild(style);
     }
 
+    function loadFile(event) {
+        const URL = window.URL || window.webkitURL;
+        const file = this.files[0];
+
+        if (file.type.indexOf('image/gif') != 0) {
+            alert('that doesn\'t look like a gif...');
+            return;
+        }
+
+        file.arrayBuffer().then((arrayBuffer) => {
+            const gif = new GIF(arrayBuffer);
+            frames = gif.decompressFrames(true);
+
+            console.log(frames.length + ' frames');
+
+            encode();
+        });
+    }
+
     window.addEventListener('load', () => {
+        const fileInput = document.getElementById('file-input');
+
+        fileInput.addEventListener('change', loadFile);
+
         const oReq = new XMLHttpRequest();
         oReq.open('GET', 'spongebob.gif', true);
         oReq.responseType = "arraybuffer";
@@ -121,3 +144,4 @@
         oReq.send(null);
     });
 </script>
+<input type="file" id="file-input" />

@@ -1,5 +1,6 @@
 <style>
     body {
+        margin: 0;
     }
 </style>
 <script src="gifuct-js.js"></script>
@@ -79,7 +80,8 @@
 
     function encode() {
         options = {
-            reduceColors: document.getElementById('reduce-colors-checkbox').checked
+            reduceColors: document.getElementById('reduce-colors-checkbox').checked,
+            center: document.getElementById('center-checkbox').checked
         };
 
         duration = 0;
@@ -104,7 +106,12 @@
 
         const positions = [];
         for (let x = 0; x < canvas.width; x += divider) {
-            positions.push(`${x}px 0px`);
+            if (options.center) {
+                positions.push(`calc(50% + ${x-(canvas.width/2)}px) center`);
+            }
+            else {
+                positions.push(`${x}px 0px`);
+            }
             //positions.push(`${x*width}% 0%`);
         }
 
@@ -173,4 +180,8 @@
 <div>
     <label for="reduce-colors-checkbox">reduce colors</label>
     <input type="checkbox" id="reduce-colors-checkbox" checked="true" /> ?
+</div>
+<div>
+    <label for="center-checkbox">center</label>
+    <input type="checkbox" id="center-checkbox" checked="true" /> ?
 </div>

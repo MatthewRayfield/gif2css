@@ -5,7 +5,6 @@
 <script src="gifuct-js.js"></script>
 <script>
     let divider = 2;
-    let scale = .5;
 
     let frames;
     let duration = 0;
@@ -15,6 +14,7 @@
     let context;
     let tempCanvas;
     let tempContext;
+    let options = {}
 
     const keyframes = [];
     let gradients;
@@ -52,9 +52,15 @@
             for (let y = 0; y < canvas.height; y += divider) {
                 let i = ((y * canvas.width) + x) * 4;
 
-                let r = ('00'+imageData.data[i+0].toString(16)).slice(-2).slice(0,1);
-                let g = ('00'+imageData.data[i+1].toString(16)).slice(-2).slice(0,1);
-                let b = ('00'+imageData.data[i+2].toString(16)).slice(-2).slice(0,1);
+                let r = ('0'+imageData.data[i+0].toString(16)).slice(-2);
+                let g = ('0'+imageData.data[i+1].toString(16)).slice(-2);
+                let b = ('0'+imageData.data[i+2].toString(16)).slice(-2);
+
+                if (options.reduceColors) {
+                    r = r.slice(0, 1);
+                    g = g.slice(0, 1);
+                    b = b.slice(0, 1);
+                }
 
                 let rgb = `#${r}${g}${b}`;
 
@@ -72,6 +78,10 @@
     }
 
     function encode() {
+        options = {
+            reduceColors: document.getElementById('reduce-colors-checkbox').checked
+        };
+
         duration = 0;
         time = 0;
 
@@ -140,7 +150,7 @@
 
         fileInput.addEventListener('change', loadFile);
 
-        const oReq = new XMLHttpRequest();
+        /*const oReq = new XMLHttpRequest();
         oReq.open('GET', 'spongebob.gif', true);
         oReq.responseType = "arraybuffer";
 
@@ -156,7 +166,11 @@
             }
         };
 
-        oReq.send(null);
+        oReq.send(null);*/
     });
 </script>
 <input type="file" id="file-input" />
+<div>
+    <label for="reduce-colors-checkbox">reduce colors</label>
+    <input type="checkbox" id="reduce-colors-checkbox" checked="true" /> ?
+</div>

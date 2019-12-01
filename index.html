@@ -6,6 +6,8 @@
 <script src="gifuct-js.js"></script>
 <script>
     let divider = 2;
+    let fileInput;
+    let nameInput;
 
     let frames;
     let backgroundColor;
@@ -102,7 +104,8 @@
         options = {
             reduceColors: document.getElementById('reduce-colors-checkbox').checked,
             center: document.getElementById('center-checkbox').checked,
-            transparency: document.getElementById('transparency-checkbox').checked
+            transparency: document.getElementById('transparency-checkbox').checked,
+            name: nameInput.value || 'gif-animation'
         };
 
         duration = 0;
@@ -140,13 +143,13 @@
         const seconds = (duration / 1000).toFixed(2);
         console.log(seconds, 'seconds');
 
-        css += 'animation: a ' + seconds + 's linear infinite;\n';
+        css += 'animation: ' + options.name + ' ' + seconds + 's linear infinite;\n';
         css += 'height: 100%;\n';
         css += 'background-repeat: no-repeat;\n';
         css += 'background-image: ' + gradients.join(',') + ';\n';
         css += 'background-position: ' + positions.join(',') + ';\n}\n';
 
-        css += ' @keyframes a {' + keyframes.join('\n') + '}';
+        css += ' @keyframes ' + options.name + ' {' + keyframes.join('\n') + '}';
 
         console.log(css.length / 1024 / 1024);
 
@@ -179,15 +182,21 @@
         const file = this.files[0];
 
         if (file.type.indexOf('image/gif') != 0) {
+            fileInput.value = null;
             alert('that doesn\'t look like a gif...');
             return;
+        }
+
+        if (!nameInput.value) {
+            nameInput.value = file.name.split('.')[0].replace(/ /g, '-');
         }
 
         file.arrayBuffer().then(loadGif);
     }
 
     window.addEventListener('load', () => {
-        const fileInput = document.getElementById('file-input');
+        fileInput = document.getElementById('file-input');
+        nameInput = document.getElementById('name-input');
 
         fileInput.addEventListener('change', loadFile);
 
@@ -218,4 +227,8 @@
 <div>
     <label for="transparency-checkbox">transparency</label>
     <input type="checkbox" id="transparency-checkbox" /> ?
+</div>
+<div>
+    <label for="name-input">animation name</label>
+    <input type="text" id="name-input" /> ?
 </div>

@@ -106,7 +106,8 @@
             center: document.getElementById('center-checkbox').checked,
             transparency: document.getElementById('transparency-checkbox').checked,
             name: nameInput.value || 'gif2css-animation',
-            selector: document.getElementById('selector-input').value || 'body'
+            selector: document.getElementById('selector-input').value || 'body',
+            scalable: document.getElementById('scalable-checkbox').checked
         };
 
         duration = 0;
@@ -126,19 +127,29 @@
             time += frame.delay;
         });
 
-        let css = `${options.selector} {\nbackground-size: ${divider}px ${canvas.height}px;\n`;
-        /*let width = (divider/canvas.width)*100;
-        let css = `body {\nbackground-size: ${width*1.5}% 100%;\n`;*/
+        let css = '';
+        let columnWidth = (divider/(canvas.width-divider))*100;
+
+        if (options.scalable) {
+            css += `body {\nbackground-size: ${columnWidth*2}% 100%;\n`;
+        }
+        else {
+            css += `${options.selector} {\nbackground-size: ${divider}px ${canvas.height}px;\n`;
+        }
 
         const positions = [];
         for (let x = 0; x < canvas.width; x += divider) {
-            if (options.center) {
-                positions.push(`calc(50% + ${x-(canvas.width/2)}px) center`);
+            if (options.scalable) {
+                positions.push(`${(x/divider)*columnWidth}% 0%`);
             }
             else {
-                positions.push(`${x}px 0px`);
+                if (options.center) {
+                    positions.push(`calc(50% + ${x-(canvas.width/2)}px) center`);
+                }
+                else {
+                    positions.push(`${x}px 0px`);
+                }
             }
-            //positions.push(`${x*width}% 0%`);
         }
 
         const seconds = (duration / 1000).toFixed(2);
@@ -235,4 +246,8 @@
 <div>
     <label for="selector-input">css selector</label>
     <input type="text" id="selector-input" value="body" /> ?
+</div>
+<div>
+    <label for="scalable-checkbox">scalable</label>
+    <input type="checkbox" id="scalable-checkbox" checked="true" /> ?
 </div>

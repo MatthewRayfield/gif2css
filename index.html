@@ -5,7 +5,6 @@
 </style>
 <script src="gifuct-js.js"></script>
 <script>
-    let divider = 2;
     let fileInput;
     let nameInput;
 
@@ -63,10 +62,10 @@
         let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         gradients = [];
 
-        for (let x = 0; x < canvas.width; x += divider) {
+        for (let x = 0; x < canvas.width; x += options.divider) {
             const colors = [];
 
-            for (let y = 0; y < canvas.height; y += divider) {
+            for (let y = 0; y < canvas.height; y += options.divider) {
                 let i = ((y * canvas.width) + x) * 4;
 
                 let r = ('0'+imageData.data[i+0].toString(16)).slice(-2);
@@ -107,7 +106,8 @@
             transparency: document.getElementById('transparency-checkbox').checked,
             name: nameInput.value || 'gif2css-animation',
             selector: document.getElementById('selector-input').value || 'body',
-            scalable: document.getElementById('scalable-checkbox').checked
+            scalable: document.getElementById('scalable-checkbox').checked,
+            divider: parseInt(document.getElementById('pixel-size-input').value) || 1
         };
 
         duration = 0;
@@ -128,19 +128,19 @@
         });
 
         let css = '';
-        let columnWidth = (divider/(canvas.width-divider))*100;
+        let columnWidth = (options.divider/(canvas.width-options.divider))*100;
 
         if (options.scalable) {
             css += `body {\nbackground-size: ${columnWidth*2}% 100%;\n`;
         }
         else {
-            css += `${options.selector} {\nbackground-size: ${divider}px ${canvas.height}px;\n`;
+            css += `${options.selector} {\nbackground-size: ${options.divider}px ${canvas.height}px;\n`;
         }
 
         const positions = [];
-        for (let x = 0; x < canvas.width; x += divider) {
+        for (let x = 0; x < canvas.width; x += options.divider) {
             if (options.scalable) {
-                positions.push(`${(x/divider)*columnWidth}% 0%`);
+                positions.push(`${(x/options.divider)*columnWidth}% 0%`);
             }
             else {
                 if (options.center) {
@@ -228,6 +228,10 @@
 </script>
 <input type="file" id="file-input" />
 <div>
+    <label for="pixel-size-input">pixel size</label>
+    <input type="number" id="pixel-size-input" value="2" /> ?
+</div>
+<div>
     <label for="reduce-colors-checkbox">reduce colors</label>
     <input type="checkbox" id="reduce-colors-checkbox" checked="true" /> ?
 </div>
@@ -249,5 +253,5 @@
 </div>
 <div>
     <label for="scalable-checkbox">scalable</label>
-    <input type="checkbox" id="scalable-checkbox" checked="true" /> ?
+    <input type="checkbox" id="scalable-checkbox" /> ?
 </div>

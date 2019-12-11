@@ -118,7 +118,7 @@
             transparency: document.getElementById('transparency-checkbox').checked,
             name: nameInput.value || 'gif2css-animation',
             selector: document.getElementById('selector-input').value || 'body',
-            scalable: document.getElementById('scalable-checkbox').checked,
+            resizable: document.getElementById('resizable-checkbox').checked,
             divider: parseInt(document.getElementById('pixel-size-input').value) || 1,
             scale: parseInt(document.getElementById('scale-input').value) || 100
         };
@@ -157,7 +157,7 @@
 
         let columnWidth = (options.divider/(canvas.width-options.divider))*100;
 
-        if (options.scalable) {
+        if (options.resizable) {
             css += `${options.selector}{\n\tbackground-size: ${columnWidth*2}% 100%;\n`;
         }
         else {
@@ -166,7 +166,7 @@
 
         const positions = [];
         for (let x = 0; x < canvas.width; x += options.divider) {
-            if (options.scalable) {
+            if (options.resizable) {
                 positions.push(`${(x/options.divider)*columnWidth}% 0%`);
             }
             else {
@@ -347,8 +347,8 @@
     <input type="text" id="selector-input" value="body" /> ?
 </div>
 <div>
-    <label for="scalable-checkbox">scalable</label>
-    <input type="checkbox" id="scalable-checkbox" /> ?
+    <label for="resizable-checkbox">resizable</label>
+    <input type="checkbox" id="resizable-checkbox" /> ?
 </div>
 <div>
     <button id="convert-button" disabled>convert</button>

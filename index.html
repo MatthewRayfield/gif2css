@@ -163,6 +163,7 @@
 
         for (let x = 0; x < canvas.width; x += options.divider) {
             const colors = [];
+            let lastColor;
 
             for (let y = 0; y < canvas.height; y += options.divider) {
                 let i = ((y * canvas.width) + x) * 4;
@@ -185,7 +186,25 @@
                     color += a;
                 }
 
-                colors.push(color);
+                if (options.crispy) {
+                    if (options.resizable) {
+                        let percent = ((y / (canvas.height-options.divider)) * 100).toFixed(2);
+
+                        if (lastColor) {
+                            colors.push(`${lastColor} ${percent}%`);
+                        }
+                        colors.push(`${color} ${percent}%`);
+
+                        lastColor = color;
+                    }
+                    else {
+                        colors.push(color);
+                        colors.push(color);
+                    }
+                }
+                else {
+                    colors.push(color);
+                }
             }
 
             let gradient = `linear-gradient(${colors.join(',')})`;
@@ -207,7 +226,8 @@
             selector: document.getElementById('selector-input').value || 'body',
             resizable: document.getElementById('resizable-checkbox').checked,
             divider: parseInt(document.getElementById('pixel-size-input').value) || 1,
-            scale: parseInt(document.getElementById('scale-input').value) || 100
+            scale: parseInt(document.getElementById('scale-input').value) || 100,
+            crispy: document.getElementById('crispy-checkbox').checked
         };
 
         canvas = null;
@@ -246,10 +266,15 @@
             encodeFrame();
         }
 
-        let columnWidth = (options.divider/(canvas.width-options.divider))*100;
+        let columnWidth = ((options.divider/(canvas.width-options.divider))*100).toFixed(2);
 
         if (options.resizable) {
-            css += ` {\n\tbackground-size: ${columnWidth*2}% 100%;\n`;
+            if (options.transparency) {
+                css += ` {\n\tbackground-size: ${columnWidth}% 100%;\n`;
+            }
+            else {
+                css += ` {\n\tbackground-size: ${columnWidth*2}% 100%;\n`;
+            }
         }
         else {
             css += ` {\n\tbackground-size: ${options.divider}px ${canvas.height}px;\n`;
@@ -476,6 +501,10 @@
         <div class="input-row">
             <label for="resizable-checkbox">resizable</label>
             <input type="checkbox" id="resizable-checkbox" />
+        </div>
+        <div class="input-row">
+            <label for="crispy-checkbox">crispy</label>
+            <input type="checkbox" id="crispy-checkbox" />
         </div>
         <div class="input-row">
             <button id="convert-button" disabled>convert</button>

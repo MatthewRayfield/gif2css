@@ -102,6 +102,7 @@
     let lastDisposalType;
     let keyframes;
     let gradients;
+    let firstGradients;
     let css;
 
     function wait(milliseconds) {
@@ -210,6 +211,10 @@
             gradients.push(gradient);
         }
 
+        if (!firstGradients) {
+            firstGradients = gradients;
+        }
+
         let percent = ((time / duration) * 100).toFixed(2);
 
         let frameCss = '\t'+percent+'% {background-image: '+gradients.join(',')+'}';
@@ -238,6 +243,7 @@
         time = 0;
         lastDisposalType = 2;
         keyframes = [];
+        firstGradients = null;
         css = '';
 
         let pixelCount = ((image.width*options.scale)/options.divider) * ((image.height*options.scale*(options.crispy ? 2 : 1))/options.divider) * frames.length;
@@ -325,7 +331,7 @@
         }
 
         css += '\tbackground-repeat: no-repeat;\n';
-        css += '\tbackground-image: ' + gradients.join(',') + ';\n';
+        css += '\tbackground-image: ' + firstGradients.join(',') + ';\n';
         css += '\tbackground-position: ' + positions.join(',') + ';\n';
 
         if (animated) {

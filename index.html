@@ -33,8 +33,8 @@
         if (!canvas) {
             canvas = document.createElement('canvas');
             context = canvas.getContext('2d');
-            canvas.width = dims.width;
-            canvas.height = dims.height;
+            canvas.width = dims.width * (options.scale/100);
+            canvas.height = dims.height * (options.scale/100);
 
             tempCanvas = document.createElement('canvas');
             tempContext = tempCanvas.getContext('2d');
@@ -56,7 +56,7 @@
         imageData.data.set(frame.patch);
         tempContext.putImageData(imageData, 0, 0);
 
-        context.drawImage(tempCanvas, dims.left, dims.top);
+        context.drawImage(tempCanvas, dims.left, dims.top, canvas.width, canvas.height);
 
         lastDisposalType = frame.disposalType;
     }
@@ -64,10 +64,10 @@
     function renderStill() {
         canvas = document.createElement('canvas');
         context = canvas.getContext('2d');
-        canvas.width = image.width;
-        canvas.height = image.height;
+        canvas.width = image.width * (options.scale/100);
+        canvas.height = image.height * (options.scale/100);
 
-        context.drawImage(image, 0, 0);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
     }
 
     function encodeFrame() {
@@ -119,7 +119,8 @@
             name: nameInput.value || 'gif2css-animation',
             selector: document.getElementById('selector-input').value || 'body',
             scalable: document.getElementById('scalable-checkbox').checked,
-            divider: parseInt(document.getElementById('pixel-size-input').value) || 1
+            divider: parseInt(document.getElementById('pixel-size-input').value) || 1,
+            scale: parseInt(document.getElementById('scale-input').value) || 100
         };
 
         canvas = null;
@@ -320,6 +321,10 @@
 <div>
     <label for="pixel-size-input">pixel size</label>
     <input type="number" id="pixel-size-input" value="2" /> ?
+</div>
+<div>
+    <label for="scale-input">scale %</label>
+    <input type="number" id="scale-input" value="100" /> ?
 </div>
 <div>
     <label for="reduce-colors-checkbox">reduce colors</label>

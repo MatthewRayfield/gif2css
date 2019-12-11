@@ -1,6 +1,67 @@
+<meta charset="utf-8">
+<title>gif2css</title>
+<link href="https://fonts.googleapis.com/css?family=B612+Mono:400,700&display=swap" rel="stylesheet">
 <style>
     body {
         margin: 0;
+        font: 20px 'B612 Mono', monospace;
+        background: url('otherbg.gif') #f736b4;
+    }
+    .page {
+        margin: 10px;
+        background: url('bg.gif') #ffefd0;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .top-bar {
+        font: 10px monospace;
+        text-align: right;
+        color: white;
+        background: #333;
+        padding: 1px 0;
+        white-space: nowrap;
+    }
+    a {
+        color: white;
+    }
+    .interface {
+        text-align: left;
+        display: inline-block;
+    }
+    .banner {
+        margin-left: .5rem;
+        margin-bottom: .75rem;
+    }
+    h1 {
+        display: inline-block;
+        margin: 0;
+        padding: 0;
+    }
+    h2 {
+        display: inline-block;
+        font-size: 14px;
+        margin: 0;
+        margin-left: 10px;
+        padding: 0;
+    }
+    img {
+        vertical-align: middle;
+        margin-right: 5px;
+    }
+    .input-row {
+        margin: .5rem;
+    }
+    input {
+        font: 20px 'B612 Mono', monospace;
+    }
+    input[type="text"] {
+        width: 10em;
+    }
+    input[type="number"] {
+        width: 3em;
+    }
+    button {
+        font: 20px 'B612 Mono', monospace;
     }
 </style>
 <script src="gifuct-js.js"></script>
@@ -29,12 +90,15 @@
 
     function renderFrame(frame) {
         const dims = frame.dims;
+        const scale = options.scale / 100;
+
+        console.log(dims.left, dims.top, dims.width, dims.height);
 	
         if (!canvas) {
             canvas = document.createElement('canvas');
             context = canvas.getContext('2d');
-            canvas.width = dims.width * (options.scale/100);
-            canvas.height = dims.height * (options.scale/100);
+            canvas.width = dims.width * scale;
+            canvas.height = dims.height * scale;
 
             tempCanvas = document.createElement('canvas');
             tempContext = tempCanvas.getContext('2d');
@@ -54,9 +118,10 @@
 	
         const imageData = tempContext.createImageData(dims.width, dims.height);
         imageData.data.set(frame.patch);
-        tempContext.putImageData(imageData, 0, 0);
+        tempContext.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+        tempContext.putImageData(imageData, dims.left, dims.top);
 
-        context.drawImage(tempCanvas, dims.left, dims.top, canvas.width, canvas.height);
+        context.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
 
         lastDisposalType = frame.disposalType;
     }
@@ -268,7 +333,7 @@
             return;
         }
 
-        if (!nameInput.value || nameInput.value.indexOf('gif2css-') > -1) {
+        if (!nameInput.value || nameInput.value.indexOf('gif2css') > -1) {
             nameInput.value = 'gif2css-' + file.name.split('.')[0].replace(/ /g, '-');
         }
 
@@ -285,7 +350,7 @@
         let a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         let name = options.name;
-        if (name.indexOf('gif2css-') == -1) {
+        if (name.indexOf('gif2css') == -1) {
             name = 'gif2css-' + name;
         }
         a.download = name + '.css';
@@ -317,42 +382,53 @@
         oReq.send(null);*/
     });
 </script>
-<input type="file" id="file-input" />
-<div>
-    <label for="pixel-size-input">pixel size</label>
-    <input type="number" id="pixel-size-input" value="2" /> ?
-</div>
-<div>
-    <label for="scale-input">scale %</label>
-    <input type="number" id="scale-input" value="100" /> ?
-</div>
-<div>
-    <label for="reduce-colors-checkbox">reduce colors</label>
-    <input type="checkbox" id="reduce-colors-checkbox" checked="true" /> ?
-</div>
-<div>
-    <label for="center-checkbox">center</label>
-    <input type="checkbox" id="center-checkbox" checked="true" /> ?
-</div>
-<div>
-    <label for="transparency-checkbox">transparency</label>
-    <input type="checkbox" id="transparency-checkbox" /> ?
-</div>
-<div>
-    <label for="name-input">animation name</label>
-    <input type="text" id="name-input" /> ?
-</div>
-<div>
-    <label for="selector-input">css selector</label>
-    <input type="text" id="selector-input" value="body" /> ?
-</div>
-<div>
-    <label for="resizable-checkbox">resizable</label>
-    <input type="checkbox" id="resizable-checkbox" /> ?
-</div>
-<div>
-    <button id="convert-button" disabled>convert</button>
-</div>
-<div>
-    <button id="download-button" disabled>download css</button>
+<div class="page">
+    <div class="top-bar">
+        another really useful <a href="https://matthewrayfield.com">matthew rayfield world</a> project in 2019&nbsp;
+    </div>
+    <div class="interface">
+        <div class="banner">
+            <h1><img src="head.gif" />gif2css</h1>
+            <br><h2>convert any image or animated gif to pure css</h2>
+        </div>
+        <div class="input-row">
+            <input type="file" id="file-input" />
+        </div>
+        <div class="input-row">
+            <label for="pixel-size-input">pixel size</label>
+            <input type="number" id="pixel-size-input" value="2" />
+        </div>
+        <div class="input-row">
+            <label for="scale-input">scale %</label>
+            <input type="number" id="scale-input" value="100" />
+        </div>
+        <div class="input-row">
+            <label for="reduce-colors-checkbox">reduce colors</label>
+            <input type="checkbox" id="reduce-colors-checkbox" checked="true" />
+        </div>
+        <div class="input-row">
+            <label for="center-checkbox">center</label>
+            <input type="checkbox" id="center-checkbox" checked="true" />
+        </div>
+        <div class="input-row">
+            <label for="transparency-checkbox">transparency</label>
+            <input type="checkbox" id="transparency-checkbox" />
+        </div>
+        <div class="input-row">
+            <label for="name-input">animation name</label>
+            <input type="text" id="name-input" value="gif2css" />
+        </div>
+        <div class="input-row">
+            <label for="selector-input">css selector</label>
+            <input type="text" id="selector-input" value="body" />
+        </div>
+        <div class="input-row">
+            <label for="resizable-checkbox">resizable</label>
+            <input type="checkbox" id="resizable-checkbox" />
+        </div>
+        <div class="input-row">
+            <button id="convert-button" disabled>convert</button>
+            <button id="download-button" disabled>download css</button>
+        </div>
+    </div>
 </div>

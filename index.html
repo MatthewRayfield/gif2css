@@ -107,7 +107,7 @@
 
         let percent = ((time / duration) * 100).toFixed(2);
 
-        let frameCss = percent+'%{background-image:'+gradients.join(',')+'}';
+        let frameCss = '\t'+percent+'% {background-image: '+gradients.join(',')+'}';
         keyframes.push(frameCss);
     }
 
@@ -163,10 +163,10 @@
         let columnWidth = (options.divider/(canvas.width-options.divider))*100;
 
         if (options.scalable) {
-            css += `body {\nbackground-size: ${columnWidth*2}% 100%;\n`;
+            css += `${options.selector}{\n\tbackground-size: ${columnWidth*2}% 100%;\n`;
         }
         else {
-            css += `${options.selector} {\nbackground-size: ${options.divider}px ${canvas.height}px;\n`;
+            css += `${options.selector}{\n\tbackground-size: ${options.divider}px ${canvas.height}px;\n`;
         }
 
         const positions = [];
@@ -184,17 +184,17 @@
             }
         }
 
-        css += 'background-repeat: no-repeat;\n';
-        css += 'background-image: ' + gradients.join(',') + ';\n';
-        css += 'background-position: ' + positions.join(',') + ';\n';
+        css += '\tbackground-repeat: no-repeat;\n';
+        css += '\tbackground-image: ' + gradients.join(',') + ';\n';
+        css += '\tbackground-position: ' + positions.join(',') + ';\n';
 
         if (animated) {
             const seconds = (duration / 1000).toFixed(2);
             console.log(seconds, 'seconds');
 
-            css += 'animation: ' + options.name + ' ' + seconds + 's linear infinite;\n}\n';
+            css += '\tanimation: ' + options.name + ' ' + seconds + 's linear infinite;\n}\n\n';
 
-            css += ' @keyframes ' + options.name + ' {' + keyframes.join('\n') + '}';
+            css += '@keyframes ' + options.name + '{ \n' + keyframes.join('\n') + '\n}';
         }
         else {
             css += '}';

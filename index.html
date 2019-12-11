@@ -114,13 +114,12 @@
 
     function renderFrame(frame) {
         const dims = frame.dims;
-        const scale = options.scale / 100;
 	
         if (!canvas) {
             canvas = document.createElement('canvas');
             context = canvas.getContext('2d');
-            canvas.width = dims.width * scale;
-            canvas.height = dims.height * scale;
+            canvas.width = dims.width * options.scale;
+            canvas.height = dims.height * options.scale;
 
             tempCanvas = document.createElement('canvas');
             tempContext = tempCanvas.getContext('2d');
@@ -151,8 +150,8 @@
     function renderStill() {
         canvas = document.createElement('canvas');
         context = canvas.getContext('2d');
-        canvas.width = image.width * (options.scale/100);
-        canvas.height = image.height * (options.scale/100);
+        canvas.width = image.width * options.scale;
+        canvas.height = image.height * options.scale;
 
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
     }
@@ -226,7 +225,7 @@
             selector: document.getElementById('selector-input').value || 'body',
             resizable: document.getElementById('resizable-checkbox').checked,
             divider: parseInt(document.getElementById('pixel-size-input').value) || 1,
-            scale: parseInt(document.getElementById('scale-input').value) || 100,
+            scale: (parseInt(document.getElementById('scale-input').value) || 100) / 100,
             crispy: document.getElementById('crispy-checkbox').checked
         };
 
@@ -240,6 +239,36 @@
         lastDisposalType = 2;
         keyframes = [];
         css = '';
+
+        let pixelCount = ((image.width*options.scale)/options.divider) * ((image.height*options.scale*(options.crispy ? 2 : 1))/options.divider) * frames.length;
+        let perPixel = 5;
+
+        if (!options.reduceColors) {
+            perPixel += 3;
+            if (options.transparency) {
+                perPixel += 2;
+            }
+        }
+        else {
+            if (options.transparency) {
+                perPixel += 1;
+            }
+        }
+
+        let sizeEstimate = ((pixelCount * perPixel)/1024/1024).toFixed(2);
+
+        console.log('estimate', sizeEstimate);
+
+        let confirmed = true;
+        if (sizeEstimate > 30) {
+            confirmed = confirm('uh oh this is gonna be a big css file.\nit might freeze your browser.\ncontinue ?\n\n( you can make it smaller by reducing scale, increasing pixel size, checking reduce color, unchecking transparency, or unchecking crispy )');
+        }
+        if (!confirmed) {
+            statusElement.innerHTML = 'cancelled.';
+            statusElement.className = '';
+            convertButton.disabled = false;
+            return;
+        }
 
         let animated = file.type == 'image/gif' && frames.length > 1;
 
@@ -332,6 +361,8 @@
 
         statusElement.innerHTML = `done. ${size} megabytes of css generated ;]`;
         statusElement.className = '';
+
+        console.log('- - -');
 
         convertButton.disabled = false;
         downloadButton.disabled = false;

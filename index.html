@@ -86,6 +86,7 @@
     let downloadButton;
     let statusElement;
     let styleElement;
+    let previewElement;
 
     let file;
     let frames;
@@ -248,10 +249,10 @@
         let columnWidth = (options.divider/(canvas.width-options.divider))*100;
 
         if (options.resizable) {
-            css += `${options.selector}{\n\tbackground-size: ${columnWidth*2}% 100%;\n`;
+            css += ` {\n\tbackground-size: ${columnWidth*2}% 100%;\n`;
         }
         else {
-            css += `${options.selector}{\n\tbackground-size: ${options.divider}px ${canvas.height}px;\n`;
+            css += ` {\n\tbackground-size: ${options.divider}px ${canvas.height}px;\n`;
         }
 
         const positions = [];
@@ -279,11 +280,23 @@
 
             css += '\tanimation: ' + options.name + ' ' + seconds + 's linear infinite;\n}\n\n';
 
-            css += '@keyframes ' + options.name + '{ \n' + keyframes.join('\n') + '\n}';
+            css += '@keyframes ' + options.name + ' { \n' + keyframes.join('\n') + '\n}';
         }
         else {
             css += '}';
         }
+
+        if (!styleElement) {
+            styleElement = document.createElement('style');
+            document.head.appendChild(styleElement);
+        }
+        styleElement.innerHTML = '#preview' + css;
+
+        previewElement.style.width = canvas.width;
+        previewElement.style.height = canvas.height;
+        previewElement.style.display = 'block';
+
+        css = options.selector + css;
 
         let size = (css.length / 1024 / 1024).toFixed(2);
         console.log(size + ' MB');
@@ -291,12 +304,6 @@
         statusElement.innerHTML = 'loading preview...';
         statusElement.className = 'working';
         await wait(100); // wait for ui
-
-        if (!styleElement) {
-            styleElement = document.createElement('style');
-            document.head.appendChild(styleElement);
-        }
-        styleElement.innerHTML = css;
 
         statusElement.innerHTML = `done. ${size} megabytes of css generated ;]`;
         statusElement.className = '';
@@ -327,6 +334,7 @@
 
         convertButton.disabled = true;
         downloadButton.disabled = true;
+        previewElement.style.display = 'none';
 
         let newImage = new Image();
 
@@ -356,6 +364,7 @@
     function handleFile(event) {
         convertButton.disabled = true;
         downloadButton.disabled = true;
+        previewElement.style.display = 'none';
         image = null;
         frames = [];
 
@@ -403,6 +412,7 @@
         convertButton = document.getElementById('convert-button');
         downloadButton = document.getElementById('download-button');
         statusElement = document.getElementById('status');
+        previewElement = document.getElementById('preview');
 
         fileInput.addEventListener('change', handleFile);
         convertButton.addEventListener('click', loadAndConvert);
@@ -474,5 +484,6 @@
         <div class="input-row status-bar">
             <span id="status"></span>
         </div>
+        <div id="preview"></div>
     </div>
 </div>

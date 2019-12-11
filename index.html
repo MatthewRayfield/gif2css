@@ -268,6 +268,23 @@
         newImage.src = URL.createObjectURL(file);
     }
 
+    function download() {
+        if (!css) {
+            return;
+        }
+
+        let blob = new Blob([css], {type: 'text/css'});
+
+        let a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        let name = options.name;
+        if (name.indexOf('gif2css-') == -1) {
+            name = 'gif2css-' + name;
+        }
+        a.download = name + '.css';
+        a.click();
+    }
+
     window.addEventListener('load', () => {
         fileInput = document.getElementById('file-input');
         nameInput = document.getElementById('name-input');
@@ -276,6 +293,7 @@
 
         fileInput.addEventListener('change', handleFile);
         convertButton.addEventListener('click', convert);
+        downloadButton.addEventListener('click', download);
 
         /*const oReq = new XMLHttpRequest();
         oReq.open('GET', 'spongebob.gif', true);

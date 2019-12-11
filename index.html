@@ -5,7 +5,7 @@
     body {
         margin: 0;
         font: 20px 'B612 Mono', monospace;
-        background: url('otherbg.gif') #f736b4;
+        background: url('otherbg.gif') #f736b4; /* #f78636 */
     }
     .page {
         margin: 10px;
@@ -63,6 +63,20 @@
     button {
         font: 20px 'B612 Mono', monospace;
     }
+    .status-bar {
+        margin-top: 1rem;
+    }
+    #status {
+        font-weight: bold;
+        display: inline-block;
+    }
+    #status.working {
+        animation: working .25s linear alternate infinite;
+    }
+    @keyframes working {
+        from {transform: translate(0, -10px);}
+        to {transform: translate(0, 0);}
+    }
 </style>
 <script src="gifuct-js.js"></script>
 <script>
@@ -70,6 +84,7 @@
     let nameInput;
     let convertButton;
     let downloadButton;
+    let statusElement;
     let styleElement;
 
     let file;
@@ -88,11 +103,17 @@
     let gradients;
     let css;
 
+    function wait(milliseconds) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve();
+            }, milliseconds);
+        });
+    }
+
     function renderFrame(frame) {
         const dims = frame.dims;
         const scale = options.scale / 100;
-
-        console.log(dims.left, dims.top, dims.width, dims.height);
 	
         if (!canvas) {
             canvas = document.createElement('canvas');
@@ -176,7 +197,7 @@
         keyframes.push(frameCss);
     }
 
-    function convert() {
+    async function convert() {
         options = {
             reduceColors: document.getElementById('reduce-colors-checkbox').checked,
             center: document.getElementById('center-checkbox').checked,
@@ -202,6 +223,10 @@
         let animated = file.type == 'image/gif' && frames.length > 1;
 
         console.log('animated', animated);
+
+        statusElement.innerHTML = 'generating css...';
+        statusElement.className = 'working';
+        await wait(100); // wait for ui
 
         if (animated) {
             frames.forEach((frame) => {
@@ -260,13 +285,21 @@
             css += '}';
         }
 
-        console.log((css.length / 1024 / 1024).toFixed(1) + ' MB');
+        let size = (css.length / 1024 / 1024).toFixed(2);
+        console.log(size + ' MB');
+
+        statusElement.innerHTML = 'loading preview...';
+        statusElement.className = 'working';
+        await wait(100); // wait for ui
 
         if (!styleElement) {
             styleElement = document.createElement('style');
             document.head.appendChild(styleElement);
         }
         styleElement.innerHTML = css;
+
+        statusElement.innerHTML = `done. ${size} megabytes of css generated ;]`;
+        statusElement.className = '';
 
         convertButton.disabled = false;
         downloadButton.disabled = false;
@@ -297,10 +330,14 @@
 
         let newImage = new Image();
 
-        newImage.addEventListener('load', () => {
+        newImage.addEventListener('load', async () => {
             image = newImage;
 
             if (file.type == 'image/gif') {
+                statusElement.innerHTML = 'loading gif...';
+                statusElement.className = 'working';
+                await wait(100); // wait for ui
+
                 file.arrayBuffer().then((buffer) => {
                     loadGif(buffer);
                     image = newImage;
@@ -337,6 +374,9 @@
             nameInput.value = 'gif2css-' + file.name.split('.')[0].replace(/ /g, '-');
         }
 
+        statusElement.innerHTML = 'file loaded.';
+        statusElement.className = '';
+
         convertButton.disabled = false;
     }
 
@@ -362,6 +402,7 @@
         nameInput = document.getElementById('name-input');
         convertButton = document.getElementById('convert-button');
         downloadButton = document.getElementById('download-button');
+        statusElement = document.getElementById('status');
 
         fileInput.addEventListener('change', handleFile);
         convertButton.addEventListener('click', loadAndConvert);
@@ -429,6 +470,9 @@
         <div class="input-row">
             <button id="convert-button" disabled>convert</button>
             <button id="download-button" disabled>download css</button>
+        </div>
+        <div class="input-row status-bar">
+            <span id="status"></span>
         </div>
     </div>
 </div>

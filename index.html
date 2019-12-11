@@ -411,11 +411,13 @@
                 statusElement.className = 'working';
                 await wait(100); // wait for ui
 
-                file.arrayBuffer().then((buffer) => {
-                    loadGif(buffer);
+                let fileReader = new FileReader();
+                fileReader.addEventListener('load', () => {
+                    loadGif(fileReader.result);
                     image = newImage;
                     convert();
                 });
+                fileReader.readAsArrayBuffer(file);
             }
             else {
                 image = newImage;

@@ -7,24 +7,27 @@
 <script>
     let fileInput;
     let nameInput;
+    let convertButton;
+    let downloadButton;
+    let styleElement;
 
+    let file;
     let frames;
+    let image;
     let backgroundColor;
-    let duration = 0;
-    let time = 0;
-    let f = 0;
+    let duration;
+    let time;
     let canvas;
     let context;
     let tempCanvas;
     let tempContext;
-    let options = {}
-    let lastDisposalType = 2;
-
-    const keyframes = [];
+    let options;
+    let lastDisposalType;
+    let keyframes;
     let gradients;
+    let css;
 
-    function render() {
-        const frame = frames[f];
+    function renderFrame(frame) {
         const dims = frame.dims;
 	
         if (!canvas) {
@@ -58,7 +61,16 @@
         lastDisposalType = frame.disposalType;
     }
 
-    function convert() {
+    function renderStill() {
+        canvas = document.createElement('canvas');
+        context = canvas.getContext('2d');
+        canvas.width = image.width;
+        canvas.height = image.height;
+
+        context.drawImage(image, 0, 0);
+    }
+
+    function encodeFrame() {
         let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         gradients = [];
 
@@ -99,7 +111,13 @@
         keyframes.push(frameCss);
     }
 
-    function encode() {
+    function convert() {
+        if (!file || !image) {
+            return;
+        }
+
+        downloadButton.disabled = true;
+
         options = {
             reduceColors: document.getElementById('reduce-colors-checkbox').checked,
             center: document.getElementById('center-checkbox').checked,
@@ -110,24 +128,38 @@
             divider: parseInt(document.getElementById('pixel-size-input').value) || 1
         };
 
+        canvas = null;
+        context = null;
+        tempCanvas = null;
+        tempContext = null;
+
         duration = 0;
         time = 0;
         lastDisposalType = 2;
+        keyframes = [];
+        css = '';
 
-        frames.forEach((frame) => {
-            duration += frame.delay;
-        });
+        let animated = file.type == 'image/gif' && frames.length > 1;
 
-        frames.forEach((frame, ff) => {
-            f = ff;
+        console.log('animated', animated);
 
-            render();
-            convert();
+        if (animated) {
+            frames.forEach((frame) => {
+                duration += frame.delay;
+            });
 
-            time += frame.delay;
-        });
+            frames.forEach((frame, ff) => {
+                renderFrame(frame);
+                encodeFrame();
 
-        let css = '';
+                time += frame.delay;
+            });
+        }
+        else {
+            renderStill();
+            encodeFrame();
+        }
+
         let columnWidth = (options.divider/(canvas.width-options.divider))*100;
 
         if (options.scalable) {
@@ -152,64 +184,98 @@
             }
         }
 
-        const seconds = (duration / 1000).toFixed(2);
-        console.log(seconds, 'seconds');
-
-        css += 'animation: ' + options.name + ' ' + seconds + 's linear infinite;\n';
         css += 'background-repeat: no-repeat;\n';
         css += 'background-image: ' + gradients.join(',') + ';\n';
-        css += 'background-position: ' + positions.join(',') + ';\n}\n';
+        css += 'background-position: ' + positions.join(',') + ';\n';
 
-        css += ' @keyframes ' + options.name + ' {' + keyframes.join('\n') + '}';
+        if (animated) {
+            const seconds = (duration / 1000).toFixed(2);
+            console.log(seconds, 'seconds');
 
-        console.log(css.length / 1024 / 1024);
+            css += 'animation: ' + options.name + ' ' + seconds + 's linear infinite;\n}\n';
 
-        const style = document.createElement('style');
-        style.innerHTML = css;
-        document.head.appendChild(style);
+            css += ' @keyframes ' + options.name + ' {' + keyframes.join('\n') + '}';
+        }
+        else {
+            css += '}';
+        }
+
+        console.log((css.length / 1024 / 1024).toFixed(1) + ' MB');
+
+        if (!styleElement) {
+            styleElement = document.createElement('style');
+            document.head.appendChild(styleElement);
+        }
+        styleElement.innerHTML = css;
+
+        downloadButton.disabled = false;
     }
 
     function loadGif(arrayBuffer) {
         const gif = new GIF(arrayBuffer);
         frames = gif.decompressFrames(true);
+        backgroundColor = null;
 
         const bgIndex = gif.raw.lsd.backgroundColorIndex;
-        if (bgIndex == frames[0].transparentIndex) {
-            backgroundColor = null;
-        }
-        else {
+        if (bgIndex != frames[0].transparentIndex) {
             const colors = frames[0].colorTable[bgIndex];
             backgroundColor = `rgb(${colors[0]}, ${colors[1]}, ${colors[2]})`;
         }
 
         console.log('bgcolor', backgroundColor);
         console.log(frames.length + ' frames');
-
-        encode();
     }
 
-    function loadFile(event) {
-        const URL = window.URL || window.webkitURL;
-        const file = this.files[0];
+    function handleFile(event) {
+        convertButton.disabled = true;
+        downloadButton.disabled = true;
+        image = null;
+        frames = [];
 
-        if (file.type.indexOf('image/gif') != 0) {
+        const URL = window.URL || window.webkitURL;
+        file = this.files[0];
+
+        if (file.type.indexOf('image/') != 0) {
+            file = null;
             fileInput.value = null;
-            alert('that doesn\'t look like a gif...');
+
+            alert('that doesn\'t look like an image or animated gif...');
             return;
         }
 
-        if (!nameInput.value) {
-            nameInput.value = file.name.split('.')[0].replace(/ /g, '-');
+        if (!nameInput.value || nameInput.value.indexOf('gif2css-') > -1) {
+            nameInput.value = 'gif2css-' + file.name.split('.')[0].replace(/ /g, '-');
         }
 
-        file.arrayBuffer().then(loadGif);
+        let newImage = new Image();
+
+        newImage.addEventListener('load', () => {
+            image = newImage;
+
+            if (file.type == 'image/gif') {
+                file.arrayBuffer().then((buffer) => {
+                    loadGif(buffer);
+                    image = newImage;
+                    convertButton.disabled = false;
+                });
+            }
+            else {
+                image = newImage;
+                convertButton.disabled = false;
+            }
+        });
+
+        newImage.src = URL.createObjectURL(file);
     }
 
     window.addEventListener('load', () => {
         fileInput = document.getElementById('file-input');
         nameInput = document.getElementById('name-input');
+        convertButton = document.getElementById('convert-button');
+        downloadButton = document.getElementById('download-button');
 
-        fileInput.addEventListener('change', loadFile);
+        fileInput.addEventListener('change', handleFile);
+        convertButton.addEventListener('click', convert);
 
         /*const oReq = new XMLHttpRequest();
         oReq.open('GET', 'spongebob.gif', true);
@@ -254,4 +320,10 @@
 <div>
     <label for="scalable-checkbox">scalable</label>
     <input type="checkbox" id="scalable-checkbox" /> ?
+</div>
+<div>
+    <button id="convert-button" disabled>convert</button>
+</div>
+<div>
+    <button id="download-button" disabled>download css</button>
 </div>

@@ -1,5 +1,6 @@
 <meta charset="utf-8">
 <title>gif2css</title>
+<link href="head.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css?family=B612+Mono:400,700&display=swap" rel="stylesheet">
 <style>
     body {
@@ -32,6 +33,12 @@
         margin-left: .5rem;
         margin-bottom: .75rem;
     }
+    .head {
+        display: inline-block;
+        vertical-align: middle;
+        width: 32px;
+        height: 32px;
+    }
     h1 {
         display: inline-block;
         margin: 0;
@@ -43,10 +50,6 @@
         margin: 0;
         margin-left: 10px;
         padding: 0;
-    }
-    img {
-        vertical-align: middle;
-        margin-right: 5px;
     }
     .input-row {
         margin: .5rem;
@@ -501,7 +504,7 @@
     </div>
     <div class="interface">
         <div class="banner">
-            <h1><img src="head.gif" />gif2css</h1>
+            <h1><div class="head"></div>gif2css</h1>
             <br><h2>convert any image or animated gif to pure css</h2>
         </div>
         <div class="input-row">
